@@ -1,26 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
-    tools:context="me.yiblet.yiblet.newsifyly.SearchActivity">
+    >
 
-    <android.support.design.widget.AppBarLayout
+    <android.support.design.widget.CoordinatorLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:theme="@style/AppTheme.AppBarOverlay">
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true"
+        tools:context="me.yiblet.yiblet.newsifyly.SearchActivity">
 
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
+        <android.support.design.widget.AppBarLayout
+            android:id="@+id/ablSearch"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            app:popupTheme="@style/AppTheme.PopupOverlay" />
+            android:layout_height="wrap_content"
+            android:fitsSystemWindows="true"
+            app:theme="@style/ToolbarStyle">
 
-    </android.support.design.widget.AppBarLayout>
+            <android.support.design.widget.CollapsingToolbarLayout
+                android:id="@+id/ctlSearch"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:layout_scrollFlags="scroll|exitUntilCollapsed"
+                app:contentScrim="?attr/colorPrimary"
+                android:fitsSystemWindows="true">
 
-    <include layout="@layout/content_search" />
+                <ImageView
+                    android:id="@+id/expandedImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:scaleType="centerCrop"
+                    app:layout_collapseMode="parallax"
+                    app:layout_collapseParallaxMultiplier="0.7"
+                    android:visibility="invisible"
+                    />
 
-</android.support.design.widget.CoordinatorLayout>
+                <android.support.v7.widget.Toolbar
+                    android:id="@+id/toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="?attr/actionBarSize"
+                    app:layout_collapseMode="pin">
+
+
+                </android.support.v7.widget.Toolbar>
+
+
+            </android.support.design.widget.CollapsingToolbarLayout>
+
+        </android.support.design.widget.AppBarLayout>
+
+
+        <!-- AppBarLayout is a wrapper for a Toolbar in order to apply scrolling effects. -->
+        <!-- Note that AppBarLayout expects to be the first child nested within a CoordinatorLayout -->
+
+
+        <!-- Toolbar is the actual app bar with text and the action items -->
+
+        <!--</android.support.design.widget.AppBarLayout>-->
+
+        <!--<include layout="@layout/content_search" />-->
+
+
+                <android.support.v7.widget.RecyclerView
+                    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:id="@+id/rvResults"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
+                    android:numColumns="2"
+                    android:layout_alignParentBottom="true"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentTop="true" />
+
+
+
+
+    </android.support.design.widget.CoordinatorLayout>
+
+
+    <android.support.design.widget.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginRight="30dp"
+        android:src="@drawable/filter"
+        android:id="@+id/fbFilter"
+        android:layout_marginEnd="30dp"
+        android:layout_marginBottom="25dp"
+        android:visibility="invisible"/>
+
+
+</RelativeLayout>
+

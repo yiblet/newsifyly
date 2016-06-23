@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:id="@+id/container"
+        android:paddingTop="10dp"
+        android:paddingBottom="15dp"
+        android:paddingRight="10dp"
+        android:paddingLeft="10dp">
+
+        <ImageView
+            android:layout_width="150dp"
+            android:layout_height="96dp"
+            android:id="@+id/ivThumb"
+            android:layout_alignParentTop="true"
+            android:src="@color/abc_input_method_navigation_guard"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Small Text"
+            android:id="@+id/tvHeadline"
+            android:layout_below="@+id/ivThumb"
+            android:layout_alignLeft="@+id/ivThumb"
+            android:layout_alignStart="@+id/ivThumb"
+            android:layout_alignRight="@+id/ivThumb"
+            android:layout_alignEnd="@+id/ivThumb"
+            android:ellipsize="end"/>
+    </RelativeLayout>
+</LinearLayout>
