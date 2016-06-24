@@ -1,6 +1,8 @@
 package me.yiblet.yiblet.newsifyly;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -12,6 +14,7 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 
 import java.util.List;
+import java.util.Random;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -42,10 +45,41 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ArticleH
         return new ArticleHolder(ArticleView);
     }
 
+    final int GREEN = Color.rgb(0x33, 0x69, 0x1E);
+    final int ORANGE = Color.rgb(0xE6, 0x51, 0x00);
+    final int BROWN = Color.rgb(0x4E, 0x34, 0x2E);
+    final int GREY = Color.rgb(0x42, 0x42, 0x42);
+    final int BLUE = Color.rgb(0x37, 0x47, 0x4F);
+    final int[] list = {GREEN, ORANGE, BROWN, GREY, BLUE};
+
+    private int pickRandomColor() {
+        Random rn = new Random();
+        return list[rn.nextInt(list.length)];
+    }
+
     @Override
     public void onBindViewHolder(ArticleHolder holder, int position) {
         Article article = articles.get(position);
-        Glide.with(holder.ivThumb.getContext()).load(article.thumbnail_url).into(holder.ivThumb);
+        Bitmap image = Bitmap.createBitmap(300, 192, Bitmap.Config.ARGB_8888);
+        View v  = holder.ivThumb;
+        image.eraseColor(pickRandomColor());
+
+        if (article.thumbnail_url != null && article.thumbnail_url != "") {
+            Glide.with(holder.ivThumb.getContext()).load(article.thumbnail_url)
+                    .centerCrop()
+                    .into(holder.ivThumb);
+        } else
+        if (article.large_url != null && article.thumbnail_url != ""){
+            Glide.with(holder.ivThumb.getContext()).load(article.large_url)
+                    .centerCrop()
+                    .into(holder.ivThumb);
+        } else if (article.wide_url != null && article.wide_url != "") {
+            Glide.with(holder.ivThumb.getContext()).load(article.wide_url)
+                    .centerCrop()
+                    .into(holder.ivThumb);
+        } else {
+            holder.ivThumb.setImageBitmap(image);
+        }
         holder.tvHeadline.setText(article.headline);
     }
 

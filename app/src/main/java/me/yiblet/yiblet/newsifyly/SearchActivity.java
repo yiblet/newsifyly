@@ -1,9 +1,11 @@
 package me.yiblet.yiblet.newsifyly;
 
+
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
-import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
@@ -15,38 +17,51 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
+import com.wdullaer.materialdatetimepicker.date.DatePickerDialog;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import cz.msebera.android.httpclient.Header;
 
-public class SearchActivity extends AppCompatActivity implements SearchView.OnQueryTextListener{
+public class SearchActivity extends AppCompatActivity implements
+        SearchView.OnQueryTextListener{
 
     ListeningSearchView svSearch;
     ArrayList<Article> articles = new ArrayList<Article>();
+    ArrayList<Article> TopStories;
     ArticleAdapter adapter;
-    @BindView(R.id.rvResults) RecyclerView rvResults;
-    @BindView(R.id.toolbar) Toolbar toolbar;
-    @BindView(R.id.fbFilter) FloatingActionButton fbFilter;
-    @BindView(R.id.ablSearch) AppBarLayout ablSearch;
+    @BindView(R.id.rvResults)
+    RecyclerView rvResults;
+    @BindView(R.id.toolbar)
+    Toolbar toolbar;
+    @BindView(R.id.fmMenu) FloatingActionMenu fmMenu;
+    @BindView(R.id.ablSearch)
+    AppBarLayout ablSearch;
+    @BindView(R.id.fbStartDate) FloatingActionButton fbStartDate;
+    @BindView(R.id.fbEndDate) FloatingActionButton fbEndDate;
+    @BindView(R.id.fbSortOrder) FloatingActionButton fbSortOrder;
+    @BindView(R.id.fbCategories) FloatingActionButton fbCategories;
+    @BindView(R.id.fbReset) FloatingActionButton fbReset;
+
     RecyclerView.OnScrollListener listener;
     String TAG = "SearchActivity";
-    String lastQuery;
-    int lastPage = 1;
     boolean Filtering = false;
+    Query query;
 
-    final String ARTICLE_SEARCH = "https://api.nytimes.com/svc/search/v2/articlesearch.json";
-    final String TOP_STORIES = "https://api.nytimes.com/svc/topstories/v2/home.json";
+
 
 
     @Override
@@ -59,7 +74,12 @@ public class SearchActivity extends AppCompatActivity implements SearchView.OnQu
 
         rvResults = (RecyclerView) findViewById(R.id.rvResults);
 
+        fmMenu.hideMenuButton(false);
+        fmMenu.setOpenedIcon(getResources().getDrawable(R.drawable.search));
+        fmMenu.setClosedIcon(getResources().getDrawable(R.drawable.filter));
+
         adapter = new ArticleAdapter(articles, this);
+        query = new Query();
         // Attach the adapter to the recyclerview to populate items
         rvResults.setAdapter(adapter);
         rvResults.addOnItemTouchListener(adapter);
@@ -67,9 +87,18 @@ public class SearchActivity extends AppCompatActivity implements SearchView.OnQu
 
 
 
+
+
 //        toolbar.setTitle("Top Stories");
         // Set layout manager to position the items
-        StaggeredGridLayoutManager manager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+        boolean isLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+        int val;
+        if (isLandscape) {
+            val = 4;
+        } else {
+            val = 2;
+        }
+        StaggeredGridLayoutManager manager = new StaggeredGridLayoutManager(val, StaggeredGridLayoutManager.VERTICAL);
         rvResults.setLayoutManager(manager);
         ItemClickSupport.addTo(rvResults).setOnItemClickListener(
                 new ItemClickSupport.OnItemClickListener() {
@@ -83,17 +112,139 @@ public class SearchActivity extends AppCompatActivity implements SearchView.OnQu
                 }
         );
 
-        ablSearch.setExpanded(false, false);
+//        ablSearch.setExpanded(false, false);
 
-        fbFilter.setOnClickListener(new View.OnClickListener() {
+//        fbFilter.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+////                svSearch.requestFocus();
+//                ablSearch.setExpanded(true);
+//                Filtering = true;
+//            }
+//        });
+
+
+        fbStartDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                svSearch.requestFocus();
-                ablSearch.setExpanded(true);
-                Filtering = true;
+                Calendar now = Calendar.getInstance();
+                DatePickerDialog dpd = DatePickerDialog.newInstance(
+                        new DatePickerDialog.OnDateSetListener() {
+                            @Override
+                            public void onDateSet(DatePickerDialog view, int y, int m, int d) {
+                                String year = Integer.toString(y);
+                                String month = String.format("%02d", m);
+                                String day = String.format("%02d", d);
+                                Date startDate = new Date(y, m, d);
+                                if (query.getEndDate() == null || query.getEndDate().after(startDate)){
+                                    fbStartDate.setLabelText(day + "/" + month + "/" + year);
+                                    query.setStartDate(startDate);
+                                    query.setStartDateString(year + month + day);
+                                } else {
+                                    Toast.makeText(SearchActivity.this, "Error: Start Date is After End Date", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        },
+                        now.get(Calendar.YEAR),
+                        now.get(Calendar.MONTH),
+                        now.get(Calendar.DAY_OF_MONTH)
+                );
+                dpd.show(getFragmentManager(), "Datepickerdialog");
             }
         });
 
+        fbEndDate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Calendar now = Calendar.getInstance();
+                DatePickerDialog dpd = DatePickerDialog.newInstance(
+                        new DatePickerDialog.OnDateSetListener() {
+                            @Override
+                            public void onDateSet(DatePickerDialog view, int y, int m, int d) {
+                                String year = Integer.toString(y);
+                                String month = String.format("%02d", m);
+                                String day = String.format("%02d", d);
+                                Date endDate = new Date(y, m, d);
+                                if (query.getStartDate() == null || query.getStartDate().before(endDate)) {
+                                    fbEndDate.setLabelText(day + "/" + month + "/" + year);
+                                    query.setEndDate(endDate);
+                                    query.setEndDateString(year + month + day);
+                                } else {
+                                    Toast.makeText(SearchActivity.this, "Error: End Date is Before Start Date", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        },
+                        now.get(Calendar.YEAR),
+                        now.get(Calendar.MONTH),
+                        now.get(Calendar.DAY_OF_MONTH)
+                );
+                dpd.show(getFragmentManager(), "Datepickerdialog");
+            }
+        });
+
+        fbSortOrder.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.d(TAG, "onCreateOptionsMenu: " + fmMenu.isOpened());
+                if (query.getAscending() == null || query.getAscending().equals("false")) {
+                    fbSortOrder.setLabelText("ascending");
+                    fbSortOrder.setImageDrawable(getResources().getDrawable(R.drawable.up));
+                    query.setAscending("true");
+                } else {
+                    fbSortOrder.setLabelText("descending");
+                    fbSortOrder.setImageDrawable(getResources().getDrawable(R.drawable.down));
+                    query.setAscending("false");
+                }
+            }
+        });
+
+        fbCategories.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                FragmentManager fm = getSupportFragmentManager();
+                CategoryDialogFragment dialog = CategoryDialogFragment.newInstance(query.getCategories());
+                dialog.setPasser(new CategoryDialogFragment.PassData() {
+                    @Override
+                    public void passData(String categories) {
+                        query.setCategories(categories);
+                        fbCategories.setImageDrawable(getResources().getDrawable(R.drawable.checkbox));
+                        fbCategories.setLabelText("Categories Chosen");
+                    }
+
+                    @Override
+                    public void noData() {
+                    }
+                });
+                dialog.show(fm, "category_dialog");
+            }
+        });
+
+        fbReset.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String q = SearchActivity.this.query.getQ();
+                int page = SearchActivity.this.query.getPage();
+                resetFilter();
+                query.setQ(q);
+                query.forcePage(page);
+            }
+        });
+
+        fmMenu.setButtonPressListener(new FloatingActionMenu.ButtonPressListener() {
+            @Override
+            public void onOpen(View v) {
+                Log.d(TAG, "onOpen: " + "Menu opened");
+            }
+
+            @Override
+            public void onClose(View v) {
+                Log.d(TAG, "onClose: " + "Menu closed");
+                if (query.isChanged()){
+                    adapter.clear();
+                    makeQuery();
+                }
+            }
+        });
         getTopStories();
     }
 
@@ -118,20 +269,16 @@ public class SearchActivity extends AppCompatActivity implements SearchView.OnQu
         inflater.inflate(R.menu.menu_search, menu);
         MenuItem searchItem = menu.findItem(R.id.svSearch);
         svSearch = (ListeningSearchView) MenuItemCompat.getActionView(searchItem);
-//        searchItem.
+
         svSearch.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
-            public boolean onQueryTextSubmit(String query) {
-                // perform query here
-
-                // workaround to avoid issues with some emulators and keyboard devices firing twice if a keyboard enter is used
-                // see https://code.google.com/p/android/issues/detail?id=24599
+            public boolean onQueryTextSubmit(String q) {
                 newScrollListener();
-                queryNYT(query);
-
+                resetFilter();
+                query.setQ(q);
+                queryNYT();
                 svSearch.clearFocus();
-                toolbar.setTitle(query);
-                fbFilter.show();
+                fmMenu.showMenuButton(true);
                 return true;
             }
 
@@ -144,8 +291,8 @@ public class SearchActivity extends AppCompatActivity implements SearchView.OnQu
             @Override
             public boolean onClose() {
                 Log.d(TAG, "onClose: " + "closing");
-                ablSearch.setExpanded(false);
                 Filtering = false;
+                resetFilter();
                 return true;
             }
         });
@@ -153,9 +300,13 @@ public class SearchActivity extends AppCompatActivity implements SearchView.OnQu
             @Override
             public void onActionViewCollapsed(View v) {
                 Log.d(TAG, "onActionViewCollapsed: " + "collapsing");
-                ablSearch.setExpanded(false);
+//                ablSearch.setExpanded(false);
                 Filtering = false;
-                fbFilter.hide();
+                adapter.clear();
+                resetFilter();
+                getTopStories();
+                fmMenu.hideMenuButton(true);
+//                fbFilter.hide();
             }
 
             @Override
@@ -182,18 +333,56 @@ public class SearchActivity extends AppCompatActivity implements SearchView.OnQu
     }
 
 
-    private void setupSearchView() {
-        svSearch.setIconifiedByDefault(true);
-        svSearch.setOnQueryTextListener(this);
-        svSearch.setQueryHint("Search Here");
-    }
-
-
     @Override
     public boolean onQueryTextChange(String newText) {
         //implement the filterng techniques
         return false;
     }
+    
+    public void resetFilter(){
+        fbEndDate.setLabelText(getResources().getString(R.string.fbEndDate));
+        fbStartDate.setLabelText(getResources().getString(R.string.fbStartDate));
+        fbSortOrder.setLabelText(getResources().getString(R.string.fbSortOrder));
+        fbSortOrder.setImageDrawable(getResources().getDrawable(R.drawable.sort));
+        fbCategories.setLabelText(getString(R.string.fbCategories));
+        fbCategories.setImageDrawable(getResources().getDrawable(R.drawable.uncheckbox));
+        query = new Query();
+    }
+
+
+    JsonHttpResponseHandler handler = new JsonHttpResponseHandler() {
+        @Override
+        public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+
+            JSONArray rawArticles = null;
+            try {
+                rawArticles = response.getJSONObject("response").getJSONArray("docs");
+//                    Log.d(TAG, "onSuccess: " + rawArticles.toString());
+                int length = rawArticles.length();
+                Log.d(TAG, "onSuccess: " + length);
+                if (length == 0) Toast.makeText(SearchActivity.this,"No Matching Articles", Toast.LENGTH_SHORT).show();
+                for (int i = 0; i < length; i++) {
+                    Article newArticle = new Article(rawArticles.getJSONObject(i));
+                    articles.add(newArticle);
+                }
+//                    Log.d(TAG, "onSuccess: " + articles.get(length - 1).toString());
+                adapter.notifyDataSetChanged();
+            } catch (JSONException e) {
+                Log.e("SearchActivity", "onSuccess: " + e.toString());
+            }
+        }
+
+        @Override
+        public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+            Log.e(TAG, "onFailure: " + responseString);
+//                super.onFailure(statusCode, headers, responseString, throwable);
+        }
+
+        @Override
+        public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
+            if (errorResponse != null) Log.e(TAG, "onFailure: " + errorResponse.toString());
+        }
+    };
 
     @Override
     public boolean onQueryTextSubmit(String query) {
@@ -201,91 +390,62 @@ public class SearchActivity extends AppCompatActivity implements SearchView.OnQu
     }
 
 
-    private void makeQuery(RequestParams params) {
-        AsyncHttpClient client = new AsyncHttpClient();
-
-        client.get(this, ARTICLE_SEARCH, params, new JsonHttpResponseHandler() {
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-
-                JSONArray rawArticles = null;
-                try {
-                    rawArticles = response.getJSONObject("response").getJSONArray("docs");
-//                    Log.d(TAG, "onSuccess: " + rawArticles.toString());
-                    int length = rawArticles.length();
-                    Log.d(TAG, "onSuccess: " + length);
-                    for (int i = 0; i < length; i++) {
-                        Article newArticle = new Article(rawArticles.getJSONObject(i));
-                        if (newArticle.thumbnail_url != null) {
-                            articles.add(newArticle);
-                        }
-                    }
-//                    Log.d(TAG, "onSuccess: " + articles.get(length - 1).toString());
-                    adapter.notifyDataSetChanged();
-                } catch (JSONException e) {
-                    Log.e("SearchActivity", "onSuccess: " + e.toString());
-                }
-            }
-
-            @Override
-            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                Log.e(TAG, "onFailure: " + responseString);
-//                super.onFailure(statusCode, headers, responseString, throwable);
-            }
-
-            @Override
-            public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
-                if (errorResponse != null) Log.e(TAG, "onFailure: " + errorResponse.toString());
-            }
-        });
+    private void makeQuery() {
+        query.makeQuery(this, handler);
     }
 
-    protected void queryNYT(String query) {
-        RequestParams params = new RequestParams();
-        params.add("api_key", Config.NYT_API_KEY);
-        if (query != null && (! query.equals(""))) {
-            params.add("q", query);
-        }
-//        adapter.clear();
-        articles.clear();
-//        params.add("page", Integer.toString(lastPage));
-        makeQuery(params);
+    protected void queryNYT() {
+        adapter.clear();
+        makeQuery();
     }
 
     protected void addPages() {
-        RequestParams params = new RequestParams();
-        params.add("api_key", Config.NYT_API_KEY);
-        if (lastQuery != null && ! lastQuery.equals("")) {
-            params.add("q", lastQuery);
-        }
-        lastPage++;
-        params.add("page", Integer.toString(this.lastPage));
-        makeQuery(params);
+//        RequestParams params = new RequestParams();
+//        params.add("api_key", Config.NYT_API_KEY);
+//        if (query.getQ() != null && ! query.getQ().equals("")) {
+//            params.add("q", query.getQ());
+//        }
+//        query.setPage(query.getPage() + 1);
+//        params.add("page", Integer.toString(this.query.getPage()));
+        query.addPage();
+        makeQuery();
     }
 
-    protected void queryNYT(){
-        queryNYT("");
+    private void dummy(){
+
     }
 
+    final String TOP_STORIES = "https://api.nytimes.com/svc/topstories/v2/home.json";
     private void getTopStories() {
-        RequestParams params = new RequestParams();
-        params.add("api_key", Config.NYT_API_KEY);
-        AsyncHttpClient client = new AsyncHttpClient();
-        client.get(this, TOP_STORIES, params, new JsonHttpResponseHandler() {
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-                super.onSuccess(statusCode, headers, response);
+        if (TopStories == null) {
+            TopStories = new ArrayList<Article>();
+            this.setTitle("Top Stories");
+            RequestParams params = new RequestParams();
+            params.add("api_key", Config.NYT_API_KEY);
+            AsyncHttpClient client = new AsyncHttpClient();
+            client.get(this, TOP_STORIES, params, new JsonHttpResponseHandler() {
+                @Override
+                public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                    super.onSuccess(statusCode, headers, response);
 
-                try {
-                    JSONArray rawTopArticles = response.getJSONArray("results");
-                    for (int i = 0; i < rawTopArticles.length(); i++) {
-                        articles.add(Article.fromTopArticle(rawTopArticles.getJSONObject(i)));
+                    try {
+                        JSONArray rawTopArticles = response.getJSONArray("results");
+                        for (int i = 0; i < rawTopArticles.length(); i++) {
+                            TopStories.add(Article.fromTopArticle(rawTopArticles.getJSONObject(i)));
+                        }
+                        articles.clear();
+                        articles.addAll(TopStories);
+                        adapter.notifyDataSetChanged();
+                    } catch (JSONException e) {
+                        Log.e("SearchActivity", "onSuccess: " + e.toString());
                     }
-                    adapter.notifyDataSetChanged();
-                } catch (JSONException e) {
-                    Log.e("SearchActivity", "onSuccess: " + e.toString());
                 }
-            }
-        });
+            });
+        } else {
+            articles.clear();
+            articles.addAll(TopStories);
+            resetFilter();
+            adapter.notifyDataSetChanged();
+        }
     }
 }

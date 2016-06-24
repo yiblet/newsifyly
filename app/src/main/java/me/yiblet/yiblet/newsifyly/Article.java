@@ -139,7 +139,7 @@ public class Article implements Parcelable {
                     article.thumbnail_url = item.getString("url");
                     break;
                 default:
-                    Log.d("Article", "Article: unexpected image type " + item.getString("subtype"));
+//                    Log.d("Article", "Article: unexpected image type " + item.getString("subtype"));
                     break;
             }
         }

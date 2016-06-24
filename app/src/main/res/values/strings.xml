@@ -8,4 +8,14 @@
     <string name="title_activity_article">ArticleActivity</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="fbEndDate">Change End Date</string>
+    <string name="fbStartDate">Change Start Date</string>
+    <string name="fbSortOrder">Change Sort Order</string>
+    <string name="arts">Arts</string>
+    <string name="technology">Technology</string>
+    <string name="politics">Politics</string>
+    <string name="culture">Culture</string>
+    <string name="business">Business</string>
+    <string name="sports">Sports</string>
+    <string name="fbCategories">Choose Categories</string>
 </resources>

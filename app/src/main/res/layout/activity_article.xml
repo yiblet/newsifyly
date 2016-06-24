@@ -45,6 +45,7 @@
             android:layout_alignParentTop="true"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
+            android:visibility="invisible"
             app:elevation="10dp" />
 
     </RelativeLayout>

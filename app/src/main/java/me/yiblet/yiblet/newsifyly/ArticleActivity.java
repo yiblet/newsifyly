@@ -61,7 +61,7 @@ public class ArticleActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Intent share = new Intent(Intent.ACTION_SEND);
                 share.setData(Uri.parse(url));
-                share.setType("text/type");
+                share.setType("text/plain");
 //                share.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
                 if (article != null && article.headline != null){
                     share.putExtra(Intent.EXTRA_TITLE, article.headline);
